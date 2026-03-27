@@ -41,10 +41,10 @@ KNOWN_SKILLS = [
 ]
 
 DEGREE_PATTERNS = [
-    r"(?:Bachelor'?s?|B\.?S\.?|B\.?A\.?|B\.?Sc\.?)",
-    r"(?:Master'?s?|M\.?S\.?|M\.?A\.?|M\.?Sc\.?|MBA)",
+    r"(?:Bachelor'?s?|B\.S\.?|B\.A\.?|B\.Sc\.?)",
+    r"(?:Master'?s?|M\.S\.?|M\.A\.?|M\.Sc\.?|MBA)",
     r"(?:Ph\.?D\.?|Doctorate)",
-    r"(?:Associate'?s?|A\.?S\.?|A\.?A\.?)",
+    r"(?:Associate'?s?)",
 ]
 
 MONTH_PATTERN = r"(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)"
@@ -111,10 +111,14 @@ def extract_experience(text):
         if role_match:
             title = role_match.group(1).strip()
             company = role_match.group(2).strip()
+            # Remove any trailing date info from company
+            company = re.split(DATE_PATTERN, company)[0].strip().rstrip(",- ")
         else:
             # Use the line before the date as the title
             if i > 0 and lines[i - 1].strip():
                 title = lines[i - 1].strip()
+                # Remove trailing date info
+                title = re.split(DATE_PATTERN, title)[0].strip().rstrip(",- ")
 
         if title:
             experiences.append({
@@ -128,30 +132,54 @@ def extract_experience(text):
 
 def extract_education(text):
     education = []
-    degree_regex = "|".join(DEGREE_PATTERNS)
+    normalized = " ".join(text.split())  # Collapse all whitespace
 
-    for match in re.finditer(
-        rf"({degree_regex})[\s,]*((?:of|in)\s+[\w\s]+)?", text, re.IGNORECASE
+    # Find institutions - match "University of X" or "X University" patterns
+    institutions = []
+    # First try "University/College of X" pattern
+    for m in re.finditer(
+        r"((?:University|College|Institute|Academy)\s+of\s+[A-Z][\w]+(?:[,\s]+[A-Z][\w]+)*)",
+        normalized,
     ):
+        institutions.append((m.start(), m.group(1)))
+    # Then try "X University/College" pattern
+    for m in re.finditer(
+        r"((?:[A-Z][a-z]+\s+){1,3}(?:University|College|Institute|School|Academy))",
+        normalized,
+    ):
+        # Skip if overlapping with a "University of" match
+        m_end = m.end()
+        if not any(pos < m_end and pos + len(name) > m.start() for pos, name in institutions):
+            institutions.append((m.start(), m.group(1)))
+
+    # Match "Degree in Field" patterns - field ends at University/College/digits/punctuation
+    degree_pattern = (
+        r"\b(Bachelor'?s?|Master'?s?|MBA|Ph\.?D\.?|Doctorate|Associate'?s?|"
+        r"B\.S\.?|B\.A\.?|M\.S\.?|M\.A\.?|B\.Sc\.?|M\.Sc\.?)"
+        r"\s*(?:degree\s+)?(?:(?:of|in)\s+([\w\s,/&]+?))?"
+        r"(?:\s+(?:University|College|Institute|School|from|at)\b|\s*[-,.\u2013]|\s+\d{4}|\s*$)"
+    )
+
+    for match in re.finditer(degree_pattern, normalized):
         degree = match.group(1).strip()
-        field = match.group(2).strip("., \t") if match.group(2) else ""
-        field = field.lstrip("of in ").strip() if field else ""
+        field = match.group(2).strip().rstrip(",.") if match.group(2) else ""
 
-        # Look for institution nearby
-        start = max(0, match.start() - 200)
-        end = min(len(text), match.end() + 200)
-        context = text[start:end]
-        inst_match = re.search(
-            r"([\w\s]+(?:University|College|Institute|School|Academy)[\w\s]*)",
-            context,
-        )
-        institution = inst_match.group(1).strip() if inst_match else ""
+        if len(degree) < 3:
+            continue
 
-        education.append({
-            "degree": degree,
-            "field": field[:100],
-            "institution": institution[:100],
-        })
+        # Find the closest institution
+        match_pos = match.start()
+        institution = ""
+        best_dist = float("inf")
+        for inst_pos, inst_name in institutions:
+            dist = abs(inst_pos - match_pos)
+            if dist < best_dist:
+                best_dist = dist
+                institution = inst_name.strip()
+
+        entry = {"degree": degree, "field": field[:100], "institution": institution[:100]}
+        if not any(e["degree"] == entry["degree"] for e in education):
+            education.append(entry)
 
     return education
 
