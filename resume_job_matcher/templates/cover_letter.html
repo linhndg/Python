@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Application Submitted - Resume Job Matcher{% endblock %}
+
+{% block content %}
+<h1>Application Submitted!</h1>
+
+<div class="card">
+    <h2>{{ job.title }} at {{ job.company }}</h2>
+    <p><strong>Location:</strong> {{ job.location }}</p>
+    <p>
+        <strong>Match Score:</strong>
+        <span class="score-badge score-{{ 'high' if match_score >= 0.7 else ('medium' if match_score >= 0.4 else 'low') }}">
+            {{ (match_score * 100)|round(1) }}%
+        </span>
+    </p>
+    <a href="{{ job.url }}" target="_blank" class="btn btn-secondary">View Original Job Posting</a>
+</div>
+
+<div class="card">
+    <h2>Generated Cover Letter</h2>
+    <div class="cover-letter">{{ cover_letter }}</div>
+</div>
+
+<div class="action-links">
+    <a href="{{ url_for('view_resume', resume_id=resume.id) }}" class="btn btn-secondary">Back to Resume</a>
+    <a href="{{ url_for('applications') }}" class="btn btn-primary">View All Applications</a>
+</div>
+{% endblock %}

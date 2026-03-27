@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}My Applications - Resume Job Matcher{% endblock %}
+
+{% block content %}
+<h1>My Applications</h1>
+
+{% if applications %}
+<table class="app-table">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Job Title</th>
+            <th>Company</th>
+            <th>Match Score</th>
+            <th>Applied Date</th>
+            <th>Status</th>
+            <th>Resume</th>
+            <th>Job Link</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for app in applications %}
+        <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ app.job_title }}</td>
+            <td>{{ app.company }}</td>
+            <td>
+                <span class="score-badge score-{{ 'high' if app.match_score >= 0.7 else ('medium' if app.match_score >= 0.4 else 'low') }}">
+                    {{ (app.match_score * 100)|round(1) }}%
+                </span>
+            </td>
+            <td>{{ app.applied_at }}</td>
+            <td><span class="status-badge status-{{ app.status }}">{{ app.status|capitalize }}</span></td>
+            <td>{{ app.filename }}</td>
+            <td><a href="{{ app.job_url }}" target="_blank">View</a></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<div class="card">
+    <p class="text-muted">No applications yet. Upload a resume and start applying!</p>
+    <a href="{{ url_for('index') }}" class="btn btn-primary">Upload Resume</a>
+</div>
+{% endif %}
+{% endblock %}

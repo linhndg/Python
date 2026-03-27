@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Resume: {{ resume.filename }} - Resume Job Matcher{% endblock %}
+
+{% block content %}
+<h1>Parsed Resume: {{ resume.filename }}</h1>
+<p class="text-muted">Uploaded: {{ resume.uploaded_at }}</p>
+
+<section class="card">
+    <h2>Skills ({{ resume.skills|length }})</h2>
+    <div class="skill-tags">
+        {% for skill in resume.skills %}
+            <span class="skill-tag">{{ skill }}</span>
+        {% else %}
+            <p class="text-muted">No skills detected. Try uploading a more detailed resume.</p>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="card">
+    <h2>Experience ({{ resume.experience|length }})</h2>
+    {% for exp in resume.experience %}
+        <div class="experience-item">
+            <strong>{{ exp.title }}</strong>
+            {% if exp.company %} at {{ exp.company }}{% endif %}
+            <br>
+            <span class="text-muted">{{ exp.duration }}</span>
+        </div>
+    {% else %}
+        <p class="text-muted">No experience entries detected.</p>
+    {% endfor %}
+</section>
+
+<section class="card">
+    <h2>Education ({{ resume.education|length }})</h2>
+    {% for edu in resume.education %}
+        <div class="education-item">
+            <strong>{{ edu.degree }}</strong>
+            {% if edu.field %} in {{ edu.field }}{% endif %}
+            {% if edu.institution %}<br><span class="text-muted">{{ edu.institution }}</span>{% endif %}
+        </div>
+    {% else %}
+        <p class="text-muted">No education entries detected.</p>
+    {% endfor %}
+</section>
+
+<section class="card">
+    <h2>Find Matching Jobs</h2>
+    <form action="{{ url_for('search_jobs', resume_id=resume.id) }}" method="post">
+        <div class="form-group">
+            <label for="location">Preferred location (optional):</label>
+            <input type="text" id="location" name="location" placeholder="e.g., San Francisco, Remote">
+        </div>
+        <button type="submit" class="btn btn-primary">Search Matching Jobs</button>
+    </form>
+</section>
+{% endblock %}

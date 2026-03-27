@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Job Matches - Resume Job Matcher{% endblock %}
+
+{% block content %}
+<h1>Matching Jobs for {{ resume.filename }}</h1>
+<p>Found {{ jobs|length }} matching jobs{% if location %} near "{{ location }}"{% endif %}.</p>
+
+<a href="{{ url_for('view_resume', resume_id=resume.id) }}" class="btn btn-secondary">Back to Resume</a>
+
+<div class="job-list">
+    {% for job in jobs %}
+    <div class="job-card">
+        <div class="job-header">
+            <div>
+                <h3>{{ job.title }}</h3>
+                <p class="job-company">{{ job.company }} &mdash; {{ job.location }}</p>
+            </div>
+            <div class="score-badge score-{{ 'high' if job.match_score >= 0.7 else ('medium' if job.match_score >= 0.4 else 'low') }}">
+                {{ (job.match_score * 100)|round(1) }}% Match
+            </div>
+        </div>
+        <p class="job-description">{{ job.description[:300] }}{% if job.description|length > 300 %}...{% endif %}</p>
+        <div class="job-actions">
+            <a href="{{ job.url }}" target="_blank" class="btn btn-secondary">View Job</a>
+            <form action="{{ url_for('apply_job', resume_id=resume.id, job_id=job.id) }}" method="post" style="display:inline;">
+                <button type="submit" class="btn btn-primary">Generate Cover Letter & Apply</button>
+            </form>
+        </div>
+    </div>
+    {% else %}
+    <p class="text-muted">No matching jobs found. Try adjusting your search or updating your resume.</p>
+    {% endfor %}
+</div>
+{% endblock %}
