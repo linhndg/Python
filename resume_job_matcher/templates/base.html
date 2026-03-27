@@ -9,10 +9,13 @@
 <body>
     <nav>
         <div class="nav-container">
-            <a href="{{ url_for('index') }}" class="nav-brand">Resume Job Matcher</a>
+            <a href="{{ url_for('dashboard') }}" class="nav-brand">Job Matcher</a>
             <div class="nav-links">
-                <a href="{{ url_for('index') }}">Upload Resume</a>
-                <a href="{{ url_for('applications') }}">My Applications</a>
+                <a href="{{ url_for('dashboard') }}" {% if request.endpoint == 'dashboard' %}class="active"{% endif %}>Dashboard</a>
+                <a href="{{ url_for('job_board') }}" {% if request.endpoint == 'job_board' %}class="active"{% endif %}>Job Board</a>
+                <a href="{{ url_for('search_jobs') }}" {% if request.endpoint == 'search_jobs' %}class="active"{% endif %}>Search</a>
+                <a href="{{ url_for('applications') }}" {% if request.endpoint == 'applications' %}class="active"{% endif %}>Applications</a>
+                <a href="{{ url_for('resumes_list') }}" {% if request.endpoint == 'resumes_list' %}class="active"{% endif %}>Resumes</a>
             </div>
         </div>
     </nav>
@@ -30,7 +33,9 @@
     </main>
 
     <footer>
-        <p>Resume Job Matcher &mdash; Upload your resume, find matching jobs, apply automatically.</p>
+        <p>Resume Job Matcher &mdash; Your personal job board with daily updates from all major job sites.</p>
     </footer>
+
+    {% block scripts %}{% endblock %}
 </body>
 </html>

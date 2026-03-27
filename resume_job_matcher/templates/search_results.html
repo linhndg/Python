@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Search Results - Job Matcher{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Search Results</h1>
+    <span class="text-muted">{{ jobs|length }} jobs for "{{ query }}"{% if location %} in {{ location }}{% endif %}</span>
+</div>
+
+<!-- Source breakdown -->
+<div class="source-breakdown">
+    {% for source, count in source_results.items() %}
+        <span class="source-tag source-{{ source }}">{{ source }}: {{ count }}</span>
+    {% endfor %}
+</div>
+
+<a href="{{ url_for('search_jobs') }}" class="btn btn-secondary" style="margin-bottom: 1rem;">New Search</a>
+
+<div class="job-list">
+    {% for job in jobs %}
+    <div class="job-card">
+        <div class="job-header">
+            <div>
+                <h3><a href="{{ url_for('job_detail', job_id=job.id) }}">{{ job.title }}</a></h3>
+                <p class="job-company">{{ job.company }} &mdash; {{ job.location }}
+                    {% if job.get('remote') %}<span class="badge badge-remote">Remote</span>{% endif %}
+                </p>
+                <div class="job-meta-tags">
+                    <span class="source-tag source-{{ job.source }}">{{ job.source }}</span>
+                    {% if job.get('salary') %}<span class="salary-tag">{{ job.salary }}</span>{% endif %}
+                </div>
+            </div>
+            <div class="job-card-right">
+                {% if job.match_score is defined %}
+                <div class="score-badge score-{{ 'high' if job.match_score >= 0.7 else ('medium' if job.match_score >= 0.4 else 'low') }}">
+                    {{ (job.match_score * 100)|round(1) }}%
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        <p class="job-description">{{ job.description[:250] }}{% if job.description|length > 250 %}...{% endif %}</p>
+        <div class="job-actions">
+            <a href="{{ job.url }}" target="_blank" class="btn btn-small btn-secondary">View Original</a>
+            <form action="{{ url_for('save_job', job_id=job.id) }}" method="post" style="display:inline;">
+                <button type="submit" class="btn btn-small btn-secondary">Save</button>
+            </form>
+            <form action="{{ url_for('apply_job', job_id=job.id) }}" method="post" style="display:inline;">
+                <button type="submit" class="btn btn-small btn-primary">Apply</button>
+            </form>
+        </div>
+    </div>
+    {% else %}
+    <div class="card">
+        <p class="text-muted">No jobs found for this query. Try different keywords or enable more sources.</p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

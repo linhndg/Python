@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - Job Matcher{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Dashboard</h1>
+    <form action="{{ url_for('fetch_now') }}" method="post" style="display:inline;">
+        <button type="submit" class="btn btn-primary">Fetch Jobs Now</button>
+    </form>
+</div>
+
+<!-- Stats Cards -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-number">{{ stats.total }}</div>
+        <div class="stat-label">Total Jobs</div>
+    </div>
+    <div class="stat-card stat-new">
+        <div class="stat-number">{{ stats.new }}</div>
+        <div class="stat-label">New Jobs</div>
+    </div>
+    <div class="stat-card stat-saved">
+        <div class="stat-number">{{ stats.saved }}</div>
+        <div class="stat-label">Saved</div>
+    </div>
+    <div class="stat-card stat-applied">
+        <div class="stat-number">{{ stats.applied }}</div>
+        <div class="stat-label">Applied</div>
+    </div>
+</div>
+
+<!-- Sources -->
+{% if stats.sources %}
+<div class="card">
+    <h2>Jobs by Source</h2>
+    <div class="source-tags">
+        {% for source, count in stats.sources.items() %}
+            <span class="source-tag source-{{ source }}">{{ source }}: {{ count }}</span>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Quick Upload -->
+{% if not resumes %}
+<div class="card highlight-card">
+    <h2>Get Started</h2>
+    <p>Upload your resume to start matching jobs from across the USA.</p>
+    <form action="{{ url_for('upload') }}" method="post" enctype="multipart/form-data">
+        <div class="form-group">
+            <input type="file" name="resume" accept=".pdf,.docx" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Upload Resume</button>
+    </form>
+</div>
+{% else %}
+<div class="card">
+    <h2>Your Resumes</h2>
+    {% for r in resumes %}
+    <div class="resume-item">
+        <span>{{ r.filename }} {% if r.is_primary %}<span class="badge badge-primary">Primary</span>{% endif %}</span>
+        <span class="text-muted">{{ r.skills|length }} skills | {{ r.uploaded_at }}</span>
+        <a href="{{ url_for('view_resume', resume_id=r.id) }}" class="btn btn-small">View</a>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Top Matched Jobs -->
+{% if recent_jobs %}
+<div class="card">
+    <h2>Top Matched Jobs</h2>
+    <div class="job-list">
+        {% for job in recent_jobs[:5] %}
+        <div class="job-row">
+            <div class="job-info">
+                <a href="{{ url_for('job_detail', job_id=job.id) }}" class="job-title-link">{{ job.title }}</a>
+                <span class="job-meta">{{ job.company }} - {{ job.location }}</span>
+            </div>
+            <div class="job-row-right">
+                {% if job.match_score is defined %}
+                <span class="score-badge score-{{ 'high' if job.match_score >= 0.7 else ('medium' if job.match_score >= 0.4 else 'low') }}">
+                    {{ (job.match_score * 100)|round(1) }}%
+                </span>
+                {% endif %}
+                <span class="source-tag source-{{ job.source }}">{{ job.source }}</span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    <a href="{{ url_for('job_board') }}" class="btn btn-secondary" style="margin-top: 1rem;">View All Jobs</a>
+</div>
+{% endif %}
+
+<!-- Scheduler Logs -->
+{% if logs %}
+<div class="card">
+    <h2>Recent Fetches</h2>
+    <table class="simple-table">
+        <thead><tr><th>Time</th><th>Sources</th><th>New Jobs</th><th>Total</th><th>Status</th></tr></thead>
+        <tbody>
+        {% for log in logs %}
+        <tr>
+            <td>{{ log.run_at }}</td>
+            <td>{{ log.sources_queried }}</td>
+            <td>{{ log.new_jobs_found }}</td>
+            <td>{{ log.total_jobs }}</td>
+            <td><span class="badge badge-{{ 'success' if log.status == 'success' else 'error' }}">{{ log.status }}</span></td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+<!-- Available Sources Info -->
+<div class="card">
+    <h2>Configured Job Sources</h2>
+    <div class="source-tags">
+        {% for source in sources %}
+            <span class="source-tag source-{{ source }}">{{ source }}</span>
+        {% endfor %}
+    </div>
+    <p class="text-muted" style="margin-top: 0.5rem;">
+        Set API keys as environment variables to enable more sources.
+        Remotive and The Muse work without keys. The scheduler fetches new jobs every
+        {{ config.SCHEDULER_INTERVAL_HOURS if config is defined else 24 }} hours.
+    </p>
+</div>
+{% endblock %}

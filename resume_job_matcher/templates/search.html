@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Search Jobs - Job Matcher{% endblock %}
+
+{% block content %}
+<h1>Search All Job Boards</h1>
+<p>Search across {{ sources|length }} job sources simultaneously.</p>
+
+<div class="card">
+    <form action="{{ url_for('search_jobs') }}" method="post">
+        <div class="form-group">
+            <label for="query">Search Query:</label>
+            <input type="text" id="query" name="query"
+                   placeholder="e.g., Python Developer, Data Scientist, DevOps..."
+                   value="{% if primary %}{{ primary.skills[:5]|join(' ') }}{% endif %}">
+            <small class="text-muted">Leave blank to auto-search using your resume skills</small>
+        </div>
+        <div class="form-group">
+            <label for="location">Location (optional):</label>
+            <input type="text" id="location" name="location" placeholder="e.g., San Francisco, Remote, New York">
+        </div>
+        <div class="form-group">
+            <label>Sources:</label>
+            <div class="checkbox-group">
+                {% for source in sources %}
+                <label class="checkbox-label">
+                    <input type="checkbox" name="sources" value="{{ source }}" checked>
+                    <span class="source-tag source-{{ source }}">{{ source }}</span>
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Search All Sources</button>
+    </form>
+</div>
+
+<div class="card">
+    <h2>How to Enable More Sources</h2>
+    <table class="simple-table">
+        <thead><tr><th>Source</th><th>Coverage</th><th>How to Enable</th></tr></thead>
+        <tbody>
+            <tr><td><span class="source-tag source-remotive">remotive</span></td><td>Remote tech jobs worldwide</td><td>Free, no key needed</td></tr>
+            <tr><td><span class="source-tag source-themuse">themuse</span></td><td>Curated jobs from top companies</td><td>Free, no key needed</td></tr>
+            <tr><td><span class="source-tag source-jsearch">jsearch</span></td><td>LinkedIn, Indeed, Glassdoor, ZipRecruiter</td><td>Set RAPIDAPI_KEY env var</td></tr>
+            <tr><td><span class="source-tag source-adzuna">adzuna</span></td><td>Aggregates from thousands of US sites</td><td>Set ADZUNA_APP_ID + ADZUNA_APP_KEY</td></tr>
+            <tr><td><span class="source-tag source-usajobs">usajobs</span></td><td>All US government positions</td><td>Set USAJOBS_API_KEY + USAJOBS_EMAIL</td></tr>
+            <tr><td><span class="source-tag source-mock">mock</span></td><td>Sample data for testing</td><td>Always available</td></tr>
+        </tbody>
+    </table>
+</div>
+{% endblock %}

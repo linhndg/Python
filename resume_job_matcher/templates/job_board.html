@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}Job Board - Job Matcher{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Your Personal Job Board</h1>
+    <span class="text-muted">{{ jobs|length }} jobs</span>
+</div>
+
+<!-- Filters -->
+<div class="filters-bar">
+    <form method="get" class="filter-form">
+        <input type="text" name="q" placeholder="Search jobs..." value="{{ filters.get('q', '') }}" class="filter-input">
+        <input type="text" name="location" placeholder="Location" value="{{ filters.get('location', '') }}" class="filter-input filter-small">
+        <select name="source" class="filter-select">
+            <option value="">All Sources</option>
+            {% for s in sources %}
+            <option value="{{ s }}" {% if filters.get('source') == s %}selected{% endif %}>{{ s }}</option>
+            {% endfor %}
+        </select>
+        <select name="status" class="filter-select">
+            <option value="">All Status</option>
+            <option value="new" {% if filters.get('status') == 'new' %}selected{% endif %}>New</option>
+            <option value="interested" {% if filters.get('status') == 'interested' %}selected{% endif %}>Interested</option>
+            <option value="applied" {% if filters.get('status') == 'applied' %}selected{% endif %}>Applied</option>
+        </select>
+        <label class="filter-checkbox">
+            <input type="checkbox" name="remote" value="1" {% if filters.get('remote') %}checked{% endif %}> Remote
+        </label>
+        <label class="filter-checkbox">
+            <input type="checkbox" name="saved" value="1" {% if filters.get('saved') %}checked{% endif %}> Saved
+        </label>
+        <select name="min_score" class="filter-select">
+            <option value="">Min Match %</option>
+            <option value="70" {% if filters.get('min_score') == '70' %}selected{% endif %}>70%+</option>
+            <option value="50" {% if filters.get('min_score') == '50' %}selected{% endif %}>50%+</option>
+            <option value="30" {% if filters.get('min_score') == '30' %}selected{% endif %}>30%+</option>
+        </select>
+        <button type="submit" class="btn btn-primary">Filter</button>
+        <a href="{{ url_for('job_board') }}" class="btn btn-secondary">Clear</a>
+    </form>
+</div>
+
+<!-- Job List -->
+<div class="job-list">
+    {% for job in jobs %}
+    <div class="job-card {% if job.is_saved %}job-saved{% endif %}">
+        <div class="job-header">
+            <div>
+                <h3><a href="{{ url_for('job_detail', job_id=job.id) }}">{{ job.title }}</a></h3>
+                <p class="job-company">{{ job.company }} &mdash; {{ job.location }}
+                    {% if job.remote %}<span class="badge badge-remote">Remote</span>{% endif %}
+                </p>
+                <div class="job-meta-tags">
+                    <span class="source-tag source-{{ job.source }}">{{ job.source }}</span>
+                    {% if job.salary %}<span class="salary-tag">{{ job.salary }}</span>{% endif %}
+                    {% if job.date_posted %}<span class="date-tag">{{ job.date_posted }}</span>{% endif %}
+                    {% if job.status != 'new' %}<span class="status-tag status-{{ job.status }}">{{ job.status }}</span>{% endif %}
+                </div>
+            </div>
+            <div class="job-card-right">
+                {% if job.match_score is defined %}
+                <div class="score-badge score-{{ 'high' if job.match_score >= 0.7 else ('medium' if job.match_score >= 0.4 else 'low') }}">
+                    {{ (job.match_score * 100)|round(1) }}%
+                </div>
+                {% endif %}
+                <div class="job-actions-mini">
+                    <form action="{{ url_for('save_job', job_id=job.id) }}" method="post" style="display:inline;">
+                        <button type="submit" class="btn-icon" title="Save">{{ '&#9733;' if job.is_saved else '&#9734;' }}</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <p class="job-description">{{ job.description[:200] }}{% if job.description|length > 200 %}...{% endif %}</p>
+        <div class="job-actions">
+            <a href="{{ job.url }}" target="_blank" class="btn btn-small btn-secondary">View Original</a>
+            <a href="{{ url_for('job_detail', job_id=job.id) }}" class="btn btn-small btn-secondary">Details</a>
+            <form action="{{ url_for('apply_job', job_id=job.id) }}" method="post" style="display:inline;">
+                <button type="submit" class="btn btn-small btn-primary">Apply</button>
+            </form>
+        </div>
+    </div>
+    {% else %}
+    <div class="card">
+        <p class="text-muted">No jobs found. Try <a href="{{ url_for('search_jobs') }}">searching</a> or <a href="{{ url_for('fetch_now') }}">fetching</a> new jobs.</p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

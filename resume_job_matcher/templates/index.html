@@ -1,35 +1,4 @@
 {% extends "base.html" %}
-{% block title %}Upload Resume - Resume Job Matcher{% endblock %}
-
 {% block content %}
-<div class="hero">
-    <h1>Resume Job Matcher</h1>
-    <p>Upload your resume and we'll find matching jobs and apply for you.</p>
-</div>
-
-<div class="upload-card">
-    <h2>Upload Your Resume</h2>
-    <form action="{{ url_for('upload') }}" method="post" enctype="multipart/form-data">
-        <div class="form-group">
-            <label for="resume">Select your resume (PDF or DOCX):</label>
-            <input type="file" id="resume" name="resume" accept=".pdf,.docx" required>
-        </div>
-        <button type="submit" class="btn btn-primary">Upload & Parse Resume</button>
-    </form>
-</div>
-
-<div class="features">
-    <div class="feature-card">
-        <h3>1. Upload</h3>
-        <p>Upload your resume in PDF or DOCX format. We extract your skills, experience, and education.</p>
-    </div>
-    <div class="feature-card">
-        <h3>2. Match</h3>
-        <p>We search for jobs that match your profile and rank them by relevance score.</p>
-    </div>
-    <div class="feature-card">
-        <h3>3. Apply</h3>
-        <p>Generate tailored cover letters and submit applications with a single click.</p>
-    </div>
-</div>
+<script>window.location.href = "{{ url_for('dashboard') }}";</script>
 {% endblock %}
